@@ -1,0 +1,51 @@
+modules:
+  # 用于HTTP GET监控
+  http_get_2xx:
+    prober: http
+    timeout: 5s
+  # 用于HTTP POST监控
+  http_post_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      method: POST
+      basic_auth:
+        username: "test user"
+        password: "my secret"
+      body_size_limit: 1MB
+  http_body_regex:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      # 正则判断 response body字段
+      fail_if_body_matches_regexp:
+        - "failed"
+        - "deny"
+      fail_if_body_matchs_regex:
+        - "success"
+  http_header_regex:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      headers:
+        Origin: example.com
+      # 正则判断 response header 字段
+      fail_if_header_not_matches:
+        - header: Access-Control-Allow-Origin
+          allow_missing: false
+          regexp: "(\*|example\.com)"
+      fail_if_header_matches:
+        - header: Access-Control-Allow-Origin
+          allow_missing: false
+          regexp: "(\*|test\.com)"
+  http_ssl_probe:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      fail_if_not_ssl: true
+      fail_if_ssl: false
+      bearer_token: ""
+      proxy_url: "http://localhost:3128"
