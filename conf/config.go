@@ -3,20 +3,17 @@ package conf
 import (
 	"github.com/alecthomas/units"
 	"github.com/prometheus/common/config"
+	"github.com/yuanyp8/http_exporter/utils"
 	"net/http"
 	"regexp"
 	"time"
 )
 
-// 全局实例
-var global *Config
+var l = utils.Logger.Named("Conf")
 
-type IPProtocol string
-
-var (
-	IPV4 = IPProtocol("ipv4")
-	IPV6 = IPProtocol("ipv6")
-)
+type Config struct {
+	Modules map[string]Module `mapstructure:"modules"`
+}
 
 type Module struct {
 	Prober  string        `mapstructure:"prober"`
@@ -28,35 +25,6 @@ func NewDefaultModule() *Module {
 	return &Module{
 		HTTP: NewDefaultHTTPProbe(),
 	}
-}
-
-type Config struct {
-	Modules map[string]Module `mapstructure:"modules"`
-}
-
-type Regexp struct {
-	*regexp.Regexp
-	origin string
-}
-
-func NewRegexp(regexExpr string) (*Regexp, error) {
-	regex, err := regexp.Compile(regexExpr)
-	return &Regexp{regex, regexExpr}, err
-}
-
-// MustNewRegexp works like NewRegexp, but panics if the regular expression does not compile.
-func MustNewRegexp(regexExpr string) *Regexp {
-	re, err := NewRegexp(regexExpr)
-	if err != nil {
-		panic(err)
-	}
-	return re
-}
-
-type HeaderMatch struct {
-	Header       string `mapstructure:"header"`
-	Regexp       Regexp `mapstructure:"regexp"`
-	AllowMissing bool   `mapstructure:"allow_missing"` // 是否允许不含value
 }
 
 type HTTPProbe struct {
@@ -86,4 +54,29 @@ func NewDefaultHTTPProbe() *HTTPProbe {
 		Method:             http.MethodGet,
 		HTTPClientConfig:   config.DefaultHTTPClientConfig,
 	}
+}
+
+type Regexp struct {
+	*regexp.Regexp
+	origin string
+}
+
+func NewRegexp(regexExpr string) (*Regexp, error) {
+	regex, err := regexp.Compile(regexExpr)
+	return &Regexp{regex, regexExpr}, err
+}
+
+// MustNewRegexp works like NewRegexp, but panics if the regular expression does not compile.
+func MustNewRegexp(regexExpr string) *Regexp {
+	re, err := NewRegexp(regexExpr)
+	if err != nil {
+		panic(err)
+	}
+	return re
+}
+
+type HeaderMatch struct {
+	Header       string `mapstructure:"header"`
+	Regexp       Regexp `mapstructure:"regexp"`
+	AllowMissing bool   `mapstructure:"allow_missing"` // 是否允许不含value
 }
