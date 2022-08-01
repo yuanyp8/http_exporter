@@ -1,9 +1,12 @@
 package conf
 
 import (
+	"context"
 	"github.com/alecthomas/units"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/config"
 	"github.com/yuanyp8/http_exporter/utils"
+	"net"
 	"net/http"
 	"regexp"
 	"time"
@@ -84,9 +87,12 @@ type HeaderMatch struct {
 	AllowMissing bool   `mapstructure:"allow_missing"` // 是否允许不含value
 }
 
-//func isCompressionAcceptEncodingValid(encoding, acceptEncoding string) bool {
-//	if encoding == "" || acceptEncoding == "" {
-//		return true
-//	}
-//	return false
-//}
+func (h HTTPProbe) LookUpWithoutProxy(ctx context.Context, target string, durationGaugeVec *prometheus.GaugeVec) (ip *net.IPAddr, err error) {
+	var lookUpTime float64
+
+	if h.SkipResolvePhaseWithProxy || h.HTTPClientConfig.ProxyURL.URL == nil {
+		ip, lookUpTime, err = h.ChooseProtocol(ctx, target)
+		durationGaugeVec.WithLabelValues("resolve").Add(lookUpTime)
+	}
+	return
+}

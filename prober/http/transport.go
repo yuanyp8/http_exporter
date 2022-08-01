@@ -15,15 +15,16 @@ var userAgentDefaultHeader = fmt.Sprintf("Blackbox Exporter/%s", version.Version
 
 // NewRequest -> client.Do -> transport.Transport
 type transport struct {
-	Transport             http.Transport
-	NoServerNameTransport http.Transport // 针对target为ip的场景
+	Transport             http.RoundTripper
+	NoServerNameTransport http.RoundTripper // 针对target为ip的场景
 	firstHost             string
 	mu                    sync.Mutex
-	traces                []*roundTripTrace
-	current               *roundTripTrace
+
+	traces  []*roundTripTrace
+	current *roundTripTrace
 }
 
-func newTransport(rt, noServerName http.Transport) *transport {
+func newTransport(rt, noServerName http.RoundTripper) *transport {
 	return &transport{
 		Transport:             rt,
 		NoServerNameTransport: noServerName,
