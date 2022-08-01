@@ -6,6 +6,19 @@ import (
 	"sync"
 )
 
+var c *SafeConfig = &SafeConfig{
+	RWMutex: sync.RWMutex{},
+	C: &Config{
+		Modules: make(map[string]Module),
+	},
+}
+
+// C 保护私有变量
+func C() *SafeConfig {
+	return c
+}
+
+// SafeConfig Adjust multi threads condition
 type SafeConfig struct {
 	sync.RWMutex
 	C *Config
@@ -28,11 +41,11 @@ func (sc *SafeConfig) ReloadConfig(configFile string) (err error) {
 	vip := viper.New()
 	vip.SetConfigFile(configFile)
 
-	if err := vip.ReadInConfig(); err != nil {
+	if err = vip.ReadInConfig(); err != nil {
 		l.Error("error loading config", zap.String("filePath", configFile))
 		return
 	}
-	if err := vip.Unmarshal(c); err != nil {
+	if err = vip.Unmarshal(c); err != nil {
 		l.Error("error unmarshal config", zap.String("filePath", configFile))
 		return
 	}

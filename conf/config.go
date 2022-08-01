@@ -9,14 +9,16 @@ import (
 	"time"
 )
 
-var l = utils.Logger.Named("Conf")
+var (
+	l = utils.Logger.Named("Conf")
+)
 
 type Config struct {
 	Modules map[string]Module `mapstructure:"modules"`
 }
 
 type Module struct {
-	Prober  string        `mapstructure:"prober"`
+	Prober  string        `mapstructure:"prober" validate:"required"`
 	Timeout time.Duration `mapstructure:"timeout"`
 	HTTP    *HTTPProbe    `mapstructure:"http"`
 }
@@ -28,13 +30,14 @@ func NewDefaultModule() *Module {
 }
 
 type HTTPProbe struct {
-	ValidStatusCode              []int                   `mapstructure:"valid_status_code"`     // Verify response code
-	ValidHTTPVersions            []string                `mapstructure:"valid_status_code"`     // Adapt to HTTP1.x/HTTP2
-	IPProtocol                   IPProtocol              `mapstructure:"preferred_ip_protocol"` // Adapt to IPV4/IPV6
-	IPProtocolFallback           bool                    `mapstructure:"ip_protocol_fallback"`  // 允许IPV6协议降级
-	NoFollowRedirects            *bool                   `mapstructure:"no_follow_redirects"`   // 禁止重定向
-	FailIfSSL                    bool                    `mapstructure:"fail_if_ssl"`           // 如果被监控项为HTTPS，则失败
-	FailIfNotSSL                 bool                    `mapstructure:"fail_if_not_ssl"`       // 如果被监控项不是HTTPS，则失败
+	ValidStatusCode              []int                   `mapstructure:"valid_status_code"`             // Verify response code
+	ValidHTTPVersions            []string                `mapstructure:"valid_status_code"`             // Adapt to HTTP1.x/HTTP2
+	IPProtocol                   IPProtocol              `mapstructure:"preferred_ip_protocol"`         // Adapt to IPV4/IPV6
+	IPProtocolFallback           bool                    `mapstructure:"ip_protocol_fallback"`          // 允许IPV6协议降级
+	SkipResolvePhaseWithProxy    bool                    `mapstructure:"skip_resolve_phase_with_proxy"` // 解析域名时不使用代理
+	NoFollowRedirects            *bool                   `mapstructure:"no_follow_redirects"`           // 禁止重定向
+	FailIfSSL                    bool                    `mapstructure:"fail_if_ssl"`                   // 如果被监控项为HTTPS，则失败
+	FailIfNotSSL                 bool                    `mapstructure:"fail_if_not_ssl"`               // 如果被监控项不是HTTPS，则失败
 	Method                       string                  `mapstructure:"method"`
 	Headers                      map[string]string       `mapstructure:"headers"`                     // Request Headers
 	FailIfBodyMatchesRegexp      []Regexp                `mapstructure:"fail_if_body_matches_regexp"` // if Response Headers not include origin strings, return failed  Regexp是对regex.Regexp的封装，包含了源正则字符串
@@ -58,7 +61,7 @@ func NewDefaultHTTPProbe() *HTTPProbe {
 
 type Regexp struct {
 	*regexp.Regexp
-	origin string
+	origin string `mapstructure:"origin"`
 }
 
 func NewRegexp(regexExpr string) (*Regexp, error) {
@@ -80,3 +83,10 @@ type HeaderMatch struct {
 	Regexp       Regexp `mapstructure:"regexp"`
 	AllowMissing bool   `mapstructure:"allow_missing"` // 是否允许不含value
 }
+
+//func isCompressionAcceptEncodingValid(encoding, acceptEncoding string) bool {
+//	if encoding == "" || acceptEncoding == "" {
+//		return true
+//	}
+//	return false
+//}
